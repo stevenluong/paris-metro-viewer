@@ -16,7 +16,7 @@
         </style>
 				<script>
 						var paper;
-						var line3color = "#9C9933";
+						var lines = new Array();
 						window.onload = function () {
 						  paper = Raphael("canvas", "800", "400");
 							paper.clear();
@@ -24,10 +24,20 @@
 							paper.rect(0, 0, "800", "400", 10).attr({fill: "#ccc", stroke: "none"});
 							load(paper);	
 							var line3 = new Line("#9C9933");
-							line3.addStation(new Station(50,200,"Louise Michel"));
-							line3.addStation(new Station(400,200,"Porte de Champeret"));
-							line3.addStation(new Station(750,200,"Pereire"));
+							line3.addStation(50,200,"Louise Michel");
+							line3.addStation(150,200,"Porte de Champeret");
+							line3.addStation(250,200,"Pereire");
+							line3.addStation(350,300,"Wagram");
+							line3.addStation(450,100,"Malesherbes");
+							line3.addStation(550,200,"Villiers");
+							line3.addStation(650,200,"Europe");
+							line3.addStation(750,200,"Saint-Lazare");
 							line3.addTrain(new Train(line3.stations[0],true));
+							line3.addTrain(new Train(line3.stations[3],true));
+							line3.addTrain(new Train(line3.stations[3],false));
+							line3.addTrain(new Train(line3.stations[6],true));
+							line3.addTrain(new Train(line3.stations[7],false));
+							lines.push(line3);
 							updateTrains();		
 							//TIME
 							updateTime();
@@ -40,7 +50,8 @@
 						function Line(color){
 							this.stations = new Array();
 							this.trains = new Array();
-							this.addStation = function(station){
+							this.addStation = function(x,y,name){
+								var station = new Station(x,y,name,color);
 								if(this.stations.length==0){
 									station.isStart=true;
 									station.isEnd=true;
@@ -56,67 +67,17 @@
 									paper.path("M"+lastStation.x+","+lastStation.y+"L"+station.x+","+station.y).attr({stroke:color,"stroke-width":4});
 								}
 								this.stations.push(station);
+								this.stations.forEach(function(s){
+								  s.draw();
+								});
+								console.log("station added ("+this.stations.length+")");
 							}
 							this.addTrain = function(train){
 								this.trains.push(train);
 								console.log("train added ("+this.trains.length+")");
 							}
 						}
-						//train
-						function Train(station,positiveDirection)
-						{
-							var width = 20;
-							var length = 30;
-							this.drawing = paper.rect(station.x-length/2,station.y-width/2,length,width)
-							.attr({fill:"black"});
-							this.currentStation=station;
-							this.positiveDirection=positiveDirection;
-							if(positiveDirection){
-								this.nextStation=station.next;
-							}
-							else{
-								this.nextStation=station.prev;
-							}
-						}
-						setInterval(function(){updateTrains()},1000);
-						function updateTrains()
-						{
-
-							//console.log(train.drawing.x+":"+train.drawing.y);
-							/*
-							var nextStationIndex;
-							if(train.positiveDirection){
-								nextStationIndex = train.currentStationIndex+1;
-							}
-							else{
-								nextStationIndex = train.currentStationIndex-1;
-							}
-							if(nextStationIndex>=stations.length||nextStationIndex<0)
-							{
-								//Change direction
-								train.positiveDirection = !train.positiveDirection;
-								if(nextStationIndex>=stations.length){
-									nextStationIndex = nextStationIndex-2;
-								}
-								if(nextStationIndex<0){
-									nextStationIndex = nextStationIndex+2
-								}
-
-							}
-
-							
-							var xDestination = stations[nextStationIndex].x;
-							var animation = Raphael.animation({x:xDestination-trainLength/2},5000, "<>");
-							train.drawing.stop();
-							train.drawing.animate(animation);
-							if(train.positiveDirection){
-								train.currentStationIndex++;
-							}
-							else{
-								train.currentStationIndex--;
-							}*/
-						}
-						//Station
+				    //Station
 						function Station(x,y,name,color)
 						{
 							this.x = x;
@@ -124,15 +85,88 @@
 							this.name = name;
 							var nameDrawing = paper.text(x,y-30,name);
 
-							var drawing = paper.circle(x,y,20).attr({stroke:line3color,fill:line3color});
-							drawing.hover(
-							function(){
-								drawing.attr({fill:"#fff"});
-							},
-							function(){
-								drawing.attr({fill:line3color});
+							this.draw = function(){
+								var drawing = paper.circle(x,y,20).attr({stroke:color,fill:color});
+								drawing.hover(
+								function(){
+								  drawing.attr({fill:"#fff"});
+							  },
+							  function(){
+								  drawing.attr({fill:color});
+							  });
+				      }
+							
+							this.getNextPassages = function(){
+								//get data from DB
+								var x = (4+(Math.random()*4))*1000;
+								//console.log(x);
+								var nextPassages = [x,4,7,10];
+								return nextPassages;
+							}
+						}
+						//train
+						function Train(station,positiveDirection)
+						{
+				     	this.drawing = paper.circle(station.x,station.y,10)
+							.attr({fill:"black"});
+							this.currentStation=station;
+							this.positiveDirection=positiveDirection;
+							this.getTimeToNextStation=function(){
+								return this.nextStation.getNextPassages()[0];
+							};
+							if(positiveDirection){
+								this.nextStation=station.next;
+							}
+							else{
+								this.nextStation=station.prev;
+							}
+							this.getX=function(){
+				       return this.drawing.attr("cx"); 
+							}
+				      this.getY=function(){
+				       return this.drawing.attr("cy"); 
+							}
+							this.atStation=function(station){
+								//console.log("atStation");
+							  //console.log("station ("+station.x+":"+station.y+")");	
+							  //console.log("train ("+this.getX()+":"+this.getY()+")");	
+								return station.x==this.getX()&&station.y==this.getY();
+							}
+				      //console.log("station ("+station.x+":"+station.y+")");	
+				      //console.log("train ("+this.getX()+":"+this.getY()+")");	
+
+						}
+						setInterval(function(){updateTrains()},1000);
+						function updateTrains()
+						{
+							var trains = lines[0].trains;
+							trains.forEach(function(train){
+							  var currentStation = train.currentStation;
+								//console.log(currentStation);
+				        var nextStation = train.nextStation;
+								//console.log(nextStation);
+							  if(train.atStation(train.currentStation)){
+							    var animation = Raphael.animation({cx:nextStation.x,cy:nextStation.y},train.getTimeToNextStation(), "<>");
+							    train.drawing.animate(animation);
+				        }
+							  if(train.atStation(nextStation)){
+								  train.currentStation=nextStation;
+								  if(nextStation.isEnd){
+								    train.positiveDirection=false;
+								  }
+								  if(nextStation.isStart){
+								    train.positiveDirection=true;
+								  }
+								  if(train.positiveDirection){
+								    train.nextStation=nextStation.next;
+								  }
+								  else{
+								    train.nextStation=nextStation.prev;
+								  }
+							  }
 							});
 						}
+						
 						//TIME
 						setInterval(function(){updateTime()},1000);
 						function updateTime()
