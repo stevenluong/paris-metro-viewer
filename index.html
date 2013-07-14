@@ -15,45 +15,75 @@
             }
         </style>
 				<script>
-					var line3color = "#9C9933";
-					var yLine = 200;
-					var xStartLine = 50;
-					var xEndLine = 750;
-					var trainLength = 30;
 						var paper;
-						var background;
-						var train;
-						var stations = new Array();
+						var line3color = "#9C9933";
 						window.onload = function () {
 						  paper = Raphael("canvas", "800", "400");
 							paper.clear();
-							
-							background = paper.rect(0, 0, "800", "400", 10).attr({fill: "#ccc", stroke: "none"});
-							var line = setLine();
-							var LMStation = new Station(paper,xStartLine,yLine,"Louise Michel");
-							var PCStation = new Station(paper,(xEndLine+xStartLine)/2,yLine,"Porte de Champeret");
-							var PEStation = new Station(paper,xEndLine,yLine,"Pereire");
-							train = new Train(paper,xStartLine,yLine);
-							updateTrain(train);		
+							//background
+							paper.rect(0, 0, "800", "400", 10).attr({fill: "#ccc", stroke: "none"});
+							load(paper);	
+							var line3 = new Line("#9C9933");
+							line3.addStation(new Station(50,200,"Louise Michel"));
+							line3.addStation(new Station(400,200,"Porte de Champeret"));
+							line3.addStation(new Station(750,200,"Pereire"));
+							line3.addTrain(new Train(line3.stations[0],true));
+							updateTrains();		
 							//TIME
 							updateTime();
 						};
+						//Loader
+						function load(paper){
+							
+						}
 						//line 
-						function setLine(){
-							return paper.path("M"+xStartLine+","+yLine+"L"+xEndLine+","+yLine).attr({stroke:line3color,"stroke-width":4});
+						function Line(color){
+							this.stations = new Array();
+							this.trains = new Array();
+							this.addStation = function(station){
+								if(this.stations.length==0){
+									station.isStart=true;
+									station.isEnd=true;
+									station.prev=null;
+									station.next=null;
+								}
+								else{
+									var lastStation = this.stations[this.stations.length-1];
+									lastStation.next=station;
+									lastStation.isEnd=false;
+									station.prev=lastStation;
+									station.isEnd=true;
+									paper.path("M"+lastStation.x+","+lastStation.y+"L"+station.x+","+station.y).attr({stroke:color,"stroke-width":4});
+								}
+								this.stations.push(station);
+							}
+							this.addTrain = function(train){
+								this.trains.push(train);
+								console.log("train added ("+this.trains.length+")");
+							}
 						}
 						//train
-						function Train(paper,x,y)
+						function Train(station,positiveDirection)
 						{
 							var width = 20;
-							this.drawing = paper.rect(x-trainLength/2,y-width/2,trainLength,width)
+							var length = 30;
+							this.drawing = paper.rect(station.x-length/2,station.y-width/2,length,width)
 							.attr({fill:"black"});
-							this.currentStationIndex = 0;
-							this.positiveDirection=true;
+							this.currentStation=station;
+							this.positiveDirection=positiveDirection;
+							if(positiveDirection){
+								this.nextStation=station.next;
+							}
+							else{
+								this.nextStation=station.prev;
+							}
 						}
-						setInterval(function(){updateTrain(train)},5000);
-						function updateTrain(train)
+						setInterval(function(){updateTrains()},1000);
+						function updateTrains()
 						{
+
+							//console.log(train.drawing.x+":"+train.drawing.y);
+							/*
 							var nextStationIndex;
 							if(train.positiveDirection){
 								nextStationIndex = train.currentStationIndex+1;
@@ -84,23 +114,24 @@
 							}
 							else{
 								train.currentStationIndex--;
-							}
+							}*/
 						}
 						//Station
-						function Station(paper,x,y,name)
+						function Station(x,y,name,color)
 						{
-							this.drawing = paper.circle(x,y,20).attr({stroke:line3color,fill:line3color});
 							this.x = x;
-							(this.drawing.hover(function(){
-								this.drawing.attr({fill:"#fff"});
+							this.y = y;
+							this.name = name;
+							var nameDrawing = paper.text(x,y-30,name);
+
+							var drawing = paper.circle(x,y,20).attr({stroke:line3color,fill:line3color});
+							drawing.hover(
+							function(){
+								drawing.attr({fill:"#fff"});
 							},
 							function(){
-								this.drawing.attr({fill:line3color});
-							}));
-							//Name of the station
-							this.name = name;
-							this.nameDrawing = paper.text(x,y-30,name);
-							stations.push(this);
+								drawing.attr({fill:line3color});
+							});
 						}
 						//TIME
 						setInterval(function(){updateTime()},1000);
