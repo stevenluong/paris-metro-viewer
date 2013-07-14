@@ -61,7 +61,7 @@
 							else{
 								nextStationIndex = train.currentStationIndex-1;
 							}
-							if(nextStationIndex>=stations.length||nextStationIndex<=0)
+							if(nextStationIndex>=stations.length||nextStationIndex<0)
 							{
 								//Change direction
 								train.positiveDirection = !train.positiveDirection;
