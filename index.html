@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Paris Metro Viewer</title>
+        <script src="raphael-min.js"></script>
+        <style media="screen">
+            body {
+                margin: 0;
+                padding: 0;
+                text-align: center;
+            }
+            #canvas {
+                text-align: center;
+            }
+        </style>
+				<script>
+					var line3color = "#9C9933";
+					var yLine = 200;
+					var trainLength = 30;
+						var paper;
+						var background;
+						var train;
+						window.onload = function () {
+						  paper = Raphael("canvas", "800", "400");
+							paper.clear();
+							
+							background = paper.rect(0, 0, "800", "400", 10).attr({fill: "#ccc", stroke: "none"});
+							var line = setLine();
+							setStation(paper,100,yLine,"Porte de Champeret");
+							setStation(paper,700,yLine,"Pereire");
+							train = addTrain(paper,100,yLine);
+							updateTrain(train);		
+							//TIME
+							updateTime();
+						};
+						//line 
+						function setLine(){
+							return paper.path("M100,"+yLine+"L700,"+yLine).attr({stroke:line3color,"stroke-width":4});
+						}
+						//train
+						function addTrain(paper,x,y)
+						{
+							var width = 20;
+							return paper.rect(x-trainLength/2,y-width/2,trainLength,width)
+							.attr({fill:"black"});
+						}
+						setInterval(function(){updateTrain(train)},5000);
+						function updateTrain(train)
+						{
+							var animation = Raphael.animation({x: 700-trainLength/2},5000, "<>");
+							train.animate(animation);
+						}
+						//Station
+						function setStation(paper,x,y,name)
+						{
+							var station = paper.circle(x,y,20).attr({stroke:line3color,fill:line3color});
+							(station.hover(function(){
+								station.attr({fill:"#fff"});
+							},
+							function(){
+								station.attr({fill:line3color});
+							}));
+							//Name of the station
+							paper.text(x,y-30,name);
+						}
+						//TIME
+						setInterval(function(){updateTime()},1000);
+						function updateTime()
+						{
+							var date=new Date();
+							var seconds=date.getSeconds();
+							var minutes=date.getMinutes();
+							var hours=date.getHours();
+							var time = (hours<10?("0"+hours):hours)+":"+(minutes<10?("0"+minutes):minutes)+":"+seconds
+							document.getElementById("time").innerHTML=time;
+						}
+        </script>
+    </head>
+    <body>
+        <h1>Paris Metro Viewer</h1>
+				<p id="time"></p>
+        <div id="canvas"></div>
+    </body>
+</html>
+
